@@ -1,0 +1,155 @@
+#include <LiquidCrystal.h>
+
+int LED_Yellow = 13;
+int LED_Red = 12;
+int LED_Green = 11;
+int Buzzer = 9;
+int Sys_ON = 8;
+int Sys_OFF = 10;
+int GasSensor = A0;
+int FlameSensor = A1;
+int FlameConstant = 500;
+int GasConstant = 200;
+unsigned char y, data;
+const int rs = 7, en = 6, d4 = 5, d5 = 4, d6 = 3, d7 = 2;
+LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+
+void start(void);
+void Case_OFF(void);
+void Case_danger(void);
+void Case_smoke(void);
+void Case_safe(void);
+ 
+void setup() {
+  Serial.begin(9600);
+  start();
+}
+
+void loop() {
+  int Gas = analogRead(GasSensor);
+  int Flame = analogRead(FlameSensor);
+  if (Serial.available())
+    data = Serial.read();
+  switch (data) {
+    case 'a': y = 1; break;
+    case 'b': y = 0; break;
+  }
+  if (y == 1) {
+    if (Gas > GasConstant && Flame < FlameConstant) {
+      Case_danger();
+      Serial.println("Call 998");
+    }
+
+    else if (Gas > GasConstant) {
+      Case_smoke();
+      Serial.println("Smoke detected");
+    }
+    else
+    {
+      Case_safe();
+      Serial.println("Safe Mode");
+    }
+  }
+  else {
+    Case_OFF();
+    Serial.println("OFF Mode");
+  }
+  delay(2000);
+}
+
+void start(void) {
+  pinMode(GasSensor, INPUT);
+  pinMode(FlameSensor, INPUT);
+  pinMode(LED_Yellow, OUTPUT);
+  pinMode(LED_Red, OUTPUT);
+  pinMode(LED_Green, OUTPUT);
+  pinMode(Sys_ON, OUTPUT);
+  pinMode(Sys_OFF, OUTPUT);
+  pinMode(Buzzer, OUTPUT);
+  
+  digitalWrite(LED_Red, LOW);
+  digitalWrite(LED_Yellow, LOW);
+  digitalWrite(LED_Green, LOW);
+  digitalWrite(Buzzer, LOW);
+  digitalWrite(Sys_ON, LOW);
+  digitalWrite(Sys_OFF, LOW);
+
+  lcd.begin(16, 2);
+  lcd.print("CISE312 Project");
+  delay(2000);
+  lcd.begin(16, 2);
+  lcd.print("System Ready");
+  delay(2000);
+}
+
+void Case_danger(void) {
+  for (int x = 0; x < 10; x++) {
+    digitalWrite(LED_Green, LOW);
+    digitalWrite(LED_Yellow, LOW);
+    digitalWrite(LED_Red, HIGH);
+    digitalWrite(Buzzer, HIGH);
+    delay(50);
+    digitalWrite(LED_Red, LOW);
+    digitalWrite(Buzzer, LOW);
+    delay(50);
+    lcd.clear();
+    lcd.setCursor(0, 1);
+    lcd.print("Call 998");
+  }
+}
+
+void Case_smoke(void) {
+  for (int x = 0; x < 10; x++) {
+    digitalWrite(LED_Red, LOW);
+    digitalWrite(LED_Green, LOW);
+    digitalWrite(LED_Yellow, HIGH);
+    digitalWrite(Buzzer, HIGH);
+    delay(80);
+    digitalWrite(LED_Yellow, LOW);
+    digitalWrite(Buzzer, LOW);
+    delay(20);
+    lcd.clear();
+    lcd.begin(16, 2);
+    lcd.print("Alarm System");
+    lcd.setCursor(0, 1);
+    lcd.print("Smoke Detect");
+  }
+}
+
+void Case_safe(void) {
+  digitalWrite(LED_Red, LOW);
+  digitalWrite(LED_Green, HIGH);
+  digitalWrite(Sys_ON, HIGH);
+  digitalWrite(LED_Yellow, LOW);
+  delay(100);
+  digitalWrite(Sys_ON, LOW);
+  delay(300);
+  lcd.clear();
+  lcd.begin(16, 2);
+  lcd.print("Alarm System");
+  lcd.setCursor(0, 1);
+  lcd.print("System ON");
+  delay(1000);
+  lcd.clear();
+  lcd.begin(16, 2);
+  lcd.print("Alarm System");
+  lcd.setCursor(0, 1);
+  lcd.print("Safe Mode");
+}
+
+void Case_OFF(void) {
+  digitalWrite(LED_Red, LOW);
+  digitalWrite(LED_Green, LOW);
+  digitalWrite(LED_Yellow, LOW);
+  digitalWrite(Buzzer, LOW);
+  digitalWrite(Sys_ON, LOW);
+  digitalWrite(Sys_OFF, HIGH);
+  delay(50);
+  digitalWrite(Sys_OFF, LOW);
+  delay(300);
+  lcd.clear();
+  lcd.begin(16, 2);
+  lcd.print("Alarm System");
+  lcd.setCursor(0, 1);
+  lcd.print("System OFF");
+}
